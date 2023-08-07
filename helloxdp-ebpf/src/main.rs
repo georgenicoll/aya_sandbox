@@ -13,6 +13,9 @@ fn panic(_info: &core::panic::PanicInfo) -> ! {
     unsafe { core::hint::unreachable_unchecked() }
 }
 
+#[map]
+static BLOCKLIST: HashMap<u32, u32> = HashMap::<u32, u32>::with_max_entries(1024, 0);
+
 #[xdp]
 pub fn xdp_firewall(ctx: XdpContext) -> u32 {
     match try_xdp_firewall(ctx) {
@@ -21,11 +24,8 @@ pub fn xdp_firewall(ctx: XdpContext) -> u32 {
     }
 }
 
-#[map(name = "BLOCKLIST")]
-static BLOCKLIST: HashMap<u32, u32> = HashMap::<u32, u32>::with_max_entries(1024, 0);
-
 #[inline(always)]
-fn ptr_at<T>(ctx: &XdpContext, offset: usize) -> Result<*const T, ()> {
+unsafe fn ptr_at<T>(ctx: &XdpContext, offset: usize) -> Result<*const T, ()> {
     let start = ctx.data();
     let end = ctx.data_end();
     let len = mem::size_of::<T>();
@@ -34,7 +34,8 @@ fn ptr_at<T>(ctx: &XdpContext, offset: usize) -> Result<*const T, ()> {
         return Err(());
     }
 
-    Ok((start + offset) as *const T)
+    let ptr = (start + offset) as *const T;
+    Ok(&*ptr)
 }
 
 fn block_ip(address: u32) -> bool {
@@ -42,22 +43,22 @@ fn block_ip(address: u32) -> bool {
 }
 
 fn try_xdp_firewall(ctx: XdpContext) -> Result<u32, ()> {
-    let ethhdr: *const EthHdr = ptr_at(&ctx, 0)?;
+    let ethhdr: *const EthHdr = unsafe { ptr_at(&ctx, 0)? };
     match unsafe { (*ethhdr).ether_type } {
         EtherType::Ipv4 => {}
         _ => return Ok(xdp_action::XDP_PASS),
     }
 
-    let ipv4hdr: *const Ipv4Hdr = ptr_at(&ctx, EthHdr::LEN)?;
+    let ipv4hdr: *const Ipv4Hdr = unsafe { ptr_at(&ctx, EthHdr::LEN)? };
     let source_addr = u32::from_be(unsafe { (*ipv4hdr).src_addr });
 
-    let action = if block_ip(source_addr) {
-        xdp_action::XDP_DROP
+    let (action, action_name) = if block_ip(source_addr) {
+        (xdp_action::XDP_DROP, "XDP_DROP")
     } else {
-        xdp_action::XDP_PASS
+        (xdp_action::XDP_PASS, "XDP_PASS")
     };
 
-    info!(&ctx, "SRC IP: {:i}, ACTION: {}", source_addr, action);
+    info!(&ctx, "SRC IP: {:i}, ACTION: {} ({})", source_addr, action, action_name);
 
     Ok(action)
 }
