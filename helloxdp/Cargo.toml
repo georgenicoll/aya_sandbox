@@ -7,9 +7,9 @@ publish = false
 [dependencies]
 aya = { git = "https://github.com/aya-rs/aya", features = ["async_tokio"] }
 aya-log = { git = "https://github.com/aya-rs/aya" }
-clap = { version = "4.1", features = ["derive"] }
+clap = { version = "4.3.19", features = ["derive"] }
 helloxdp-common = { path = "../helloxdp-common", features = ["user"] }
-anyhow = "1"
+anyhow = "1.0.72"
 env_logger = "0.10"
 libc = "0.2"
 log = "0.4"
