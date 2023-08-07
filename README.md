@@ -1,5 +1,7 @@
 # helloxdp
 
+See https://aya-rs.dev/book/start/
+
 ## Prerequisites
 
 1. Install bpf-linker: `cargo install bpf-linker`
