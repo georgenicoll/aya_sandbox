@@ -2,6 +2,12 @@
 #![no_main]
 #![allow(nonstandard_style, dead_code)]
 
+#[allow(non_upper_case_globals)]
+#[allow(non_snake_case)]
+#[allow(non_camel_case_types)]
+#[allow(dead_code)]
+mod vmlinux;
+
 use aya_bpf::{bindings::xdp_action, macros::{map, xdp}, maps::HashMap, programs::XdpContext};
 use aya_log_ebpf::info;
 use network_types::{eth::{EthHdr, EtherType}, ip::Ipv4Hdr};

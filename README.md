@@ -26,3 +26,12 @@ cargo build
 ```bash
 RUST_LOG=info cargo xtask run
 ```
+
+# aya-tool
+
+See https://aya-rs.dev/book/aya/aya-tool/
+
+```bash
+cargo install bindgen-cli
+cargo install --git https://github.com/aya-rs/aya -- aya-tool
+```
